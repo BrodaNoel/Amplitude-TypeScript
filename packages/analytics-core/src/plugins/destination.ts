@@ -7,7 +7,6 @@ import {
   PayloadTooLargeResponse,
   PluginType,
   RateLimitResponse,
-  Response,
   Result,
   Status,
   SuccessResponse,
@@ -17,8 +16,10 @@ import { STORAGE_PREFIX } from '../constants';
 import { chunk } from '../utils/chunk';
 import { buildResult } from '../utils/result-builder';
 import { createServerConfig } from '../config';
+import { buildStatus } from '../utils/status-builder';
+import { buildResponse } from '../utils/response-builder';
 
-export class Destination implements DestinationPlugin {
+export class BaseDestination implements DestinationPlugin {
   name = 'amplitude';
   type = PluginType.DESTINATION as const;
 
@@ -116,20 +117,51 @@ export class Destination implements DestinationPlugin {
 
     try {
       const { serverUrl } = createServerConfig(this.config.serverZone, this.config.useBatch);
-      const res = await this.config.transportProvider.send(serverUrl, payload);
-      if (res === null) {
+      const responseJSON = await this.config.transportProvider.send(serverUrl, payload);
+      if (responseJSON === null) {
         this.fulfillRequest(list, 0, UNEXPECTED_ERROR_MESSAGE);
         return;
       }
-      this.handleReponse(res, list);
+      this.handleReponse(responseJSON, list);
     } catch (e) {
       this.fulfillRequest(list, 0, String(e));
     }
   }
 
-  handleReponse(res: Response, list: Context[]) {
-    const { status } = res;
-    switch (status) {
+  handleReponse(responseJSON: Record<string, any>, list: Context[]) {
+    const statusCode: number = Number(responseJSON.code) || 0;
+    const status = buildStatus(statusCode);
+    this.fulfillRequest(list, statusCode, status);
+  }
+
+  fulfillRequest(list: Context[], code: number, message: string) {
+    this.removeFromBackup(...list.map((context) => context.event));
+    list.forEach((context) => context.callback(buildResult(context.event, code, message)));
+  }
+
+  addToBackup(...events: Event[]) {
+    if (!this.config.saveEvents) return;
+    events.forEach((event) => this.backup.add(event));
+    this.snapshot();
+  }
+
+  removeFromBackup(...events: Event[]) {
+    if (!this.config.saveEvents) return;
+    events.forEach((event) => this.backup.delete(event));
+    this.snapshot();
+  }
+
+  snapshot() {
+    if (!this.config.saveEvents) return;
+    const events = Array.from(this.backup);
+    this.config.storageProvider.set(this.storageKey, events);
+  }
+}
+
+export class Destination extends BaseDestination implements DestinationPlugin {
+  handleReponse(responseJSON: Record<string, any>, list: Context[]) {
+    const res = buildResponse(responseJSON);
+    switch (res.status) {
       case Status.Success:
         this.handleSuccessResponse(res, list);
         break;
@@ -216,28 +248,5 @@ export class Destination implements DestinationPlugin {
 
   handleOtherReponse(list: Context[]) {
     this.addToQueue(...list);
-  }
-
-  fulfillRequest(list: Context[], code: number, message: string) {
-    this.removeFromBackup(...list.map((context) => context.event));
-    list.forEach((context) => context.callback(buildResult(context.event, code, message)));
-  }
-
-  addToBackup(...events: Event[]) {
-    if (!this.config.saveEvents) return;
-    events.forEach((event) => this.backup.add(event));
-    this.snapshot();
-  }
-
-  removeFromBackup(...events: Event[]) {
-    if (!this.config.saveEvents) return;
-    events.forEach((event) => this.backup.delete(event));
-    this.snapshot();
-  }
-
-  snapshot() {
-    if (!this.config.saveEvents) return;
-    const events = Array.from(this.backup);
-    this.config.storageProvider.set(this.storageKey, events);
   }
 }

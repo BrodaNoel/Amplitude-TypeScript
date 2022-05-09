@@ -1,4 +1,4 @@
-import { Destination } from '../../src/plugins/destination';
+import { BaseDestination, Destination } from '../../src/plugins/destination';
 import { DestinationContext, Status } from '@amplitude/analytics-types';
 import { useDefaultConfig } from '../helpers/default';
 import { MISSING_API_KEY_MESSAGE, UNEXPECTED_ERROR_MESSAGE } from '../../src/messages';
@@ -280,13 +280,10 @@ describe('destination', () => {
 
   describe('module level integration', () => {
     const successResponse = {
-      status: Status.Success,
-      statusCode: 200,
-      body: {
-        eventsIngested: 1,
-        payloadSizeBytes: 1,
-        serverUploadTime: 1,
-      },
+      code: 200,
+      events_ingested: 1,
+      payload_size_bytes: 1,
+      server_upload_time: 1,
     };
 
     test('should handle unexpected error', async () => {
@@ -318,16 +315,13 @@ describe('destination', () => {
           .fn()
           .mockImplementationOnce(() => {
             return Promise.resolve({
-              status: Status.Invalid,
-              statusCode: 400,
-              body: {
-                error: 'error',
-                missingField: '',
-                eventsWithInvalidFields: { a: [0] },
-                eventsWithMissingFields: { b: [] },
-                eventsWithInvalidIdLengths: {},
-                silencedEvents: [],
-              },
+              code: 400,
+              error: 'error',
+              missing_field: '',
+              events_with_invalid_fields: { a: [0] },
+              events_with_missing_fields: { b: [] },
+              events_with_invalid_id_lengths: {},
+              silenced_events: [],
             });
           })
           .mockImplementationOnce(() => {
@@ -361,15 +355,12 @@ describe('destination', () => {
       class Http {
         send = jest.fn().mockImplementationOnce(() => {
           return Promise.resolve({
-            status: Status.Invalid,
-            statusCode: 400,
-            body: {
-              error: 'error',
-              missingField: 'key',
-              eventsWithInvalidFields: {},
-              eventsWithMissingFields: {},
-              silencedEvents: [],
-            },
+            code: 400,
+            error: 'error',
+            missing_field: 'key',
+            events_with_invalid_fields: {},
+            events_with_missing_fields: {},
+            silenced_events: [],
           });
         });
       }
@@ -399,11 +390,8 @@ describe('destination', () => {
       class Http {
         send = jest.fn().mockImplementationOnce(() => {
           return Promise.resolve({
-            status: Status.PayloadTooLarge,
-            statusCode: 413,
-            body: {
-              error: 'error',
-            },
+            code: 413,
+            error: 'error',
           });
         });
       }
@@ -434,11 +422,8 @@ describe('destination', () => {
           .fn()
           .mockImplementationOnce(() => {
             return Promise.resolve({
-              status: Status.PayloadTooLarge,
-              statusCode: 413,
-              body: {
-                error: 'error',
-              },
+              code: 413,
+              error: 'error',
             });
           })
           .mockImplementationOnce(() => {
@@ -475,21 +460,18 @@ describe('destination', () => {
           .fn()
           .mockImplementationOnce(() => {
             return Promise.resolve({
-              status: Status.RateLimit,
-              statusCode: 429,
-              body: {
-                error: 'error',
-                epsThreshold: 1,
-                throttledDevices: {},
-                throttledUsers: {},
-                exceededDailyQuotaDevices: {
-                  '1': 1,
-                },
-                exceededDailyQuotaUsers: {
-                  '2': 1,
-                },
-                throttledEvents: [0],
+              code: 429,
+              error: 'error',
+              eps_threshold: 1,
+              throttled_devices: {},
+              throttled_users: {},
+              exceeded_daily_quota_devices: {
+                '1': 1,
               },
+              exceeded_daily_quota_users: {
+                '2': 1,
+              },
+              throttled_events: [0],
             });
           })
           .mockImplementationOnce(() => {
@@ -549,8 +531,7 @@ describe('destination', () => {
           .fn()
           .mockImplementationOnce(() => {
             return Promise.resolve({
-              statusCode: 500,
-              status: Status.Failed,
+              code: 500,
             });
           })
           .mockImplementationOnce(() => {
@@ -584,14 +565,12 @@ describe('destination', () => {
           .fn()
           .mockImplementationOnce(() => {
             return Promise.resolve({
-              statusCode: 500,
-              status: Status.Failed,
+              code: 500,
             });
           })
           .mockImplementationOnce(() => {
             return Promise.resolve({
-              statusCode: 500,
-              status: Status.Failed,
+              code: 500,
             });
           });
       }
@@ -616,6 +595,72 @@ describe('destination', () => {
       ]);
       expect(results[0].code).toBe(500);
       expect(results[1].code).toBe(500);
+      expect(transportProvider.send).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
+describe('BaseDestination', () => {
+  describe('handleReponse', () => {
+    test('should handle response', async () => {
+      class Http {
+        send = jest.fn().mockImplementationOnce(() => {
+          return Promise.resolve({
+            code: 500,
+          });
+        });
+      }
+      const transportProvider = new Http();
+      const destination = new BaseDestination();
+      destination.backoff = 10;
+      const config = {
+        ...useDefaultConfig(),
+        flushMaxRetries: 2,
+        flushQueueSize: 2,
+        flushIntervalMillis: 500,
+        transportProvider,
+      };
+      await destination.setup(config);
+      const results = await Promise.all([
+        destination.execute({
+          event_type: 'event_type',
+        }),
+        destination.execute({
+          event_type: 'event_type',
+        }),
+      ]);
+      expect(results[0].code).toBe(500);
+      expect(results[1].code).toBe(500);
+      expect(transportProvider.send).toHaveBeenCalledTimes(1);
+    });
+
+    test('should handle incomplete response', async () => {
+      class Http {
+        send = jest.fn().mockImplementationOnce(() => {
+          return Promise.resolve({});
+        });
+      }
+      const transportProvider = new Http();
+      const destination = new BaseDestination();
+      destination.backoff = 10;
+      const config = {
+        ...useDefaultConfig(),
+        flushMaxRetries: 2,
+        flushQueueSize: 2,
+        flushIntervalMillis: 500,
+        transportProvider,
+      };
+      await destination.setup(config);
+      const results = await Promise.all([
+        destination.execute({
+          event_type: 'event_type',
+        }),
+        destination.execute({
+          event_type: 'event_type',
+        }),
+      ]);
+      expect(results[0].code).toBe(0);
+      expect(results[1].code).toBe(0);
       expect(transportProvider.send).toHaveBeenCalledTimes(1);
     });
   });

@@ -1,6 +1,4 @@
 import { XHRTransport } from '../../src/transports/xhr';
-import * as core from '@amplitude/analytics-core';
-import { Status } from '@amplitude/analytics-types';
 
 describe('xhr', () => {
   describe('send', () => {
@@ -12,13 +10,10 @@ describe('xhr', () => {
         events: [],
       };
       const result = {
-        statusCode: 200,
-        status: Status.Success as const,
-        body: {
-          eventsIngested: 0,
-          payloadSizeBytes: 0,
-          serverUploadTime: 0,
-        },
+        code: 200,
+        events_ingested: 0,
+        payload_size_bytes: 0,
+        server_upload_time: 0,
       };
       const xhr = new XMLHttpRequest();
       const open = jest.fn();
@@ -30,16 +25,15 @@ describe('xhr', () => {
         setRequestHeader,
         send,
         readyState: 4,
-        responseText: '{}',
+        responseText: JSON.stringify(result),
       };
       jest.spyOn(window, 'XMLHttpRequest').mockReturnValueOnce(mock);
-      jest.spyOn(core, 'buildResponse').mockReturnValueOnce(result);
 
       const unresolvedResponse = transport.send(url, payload);
       expect(mock.onreadystatechange).toBeDefined();
       mock.onreadystatechange && mock.onreadystatechange(new Event(''));
       const response = await unresolvedResponse;
-      expect(response).toBe(result);
+      expect(response).toEqual(result);
       expect(open).toHaveBeenCalledWith('POST', url, true);
       expect(setRequestHeader).toHaveBeenCalledTimes(2);
       expect(send).toHaveBeenCalledTimes(1);

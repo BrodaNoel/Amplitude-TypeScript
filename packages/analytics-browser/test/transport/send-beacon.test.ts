@@ -1,5 +1,4 @@
 import { SendBeaconTransport } from '../../src/transports/send-beacon';
-import { Status } from '@amplitude/analytics-types';
 
 describe('beacon', () => {
   // eslint-disable-next-line @typescript-eslint/unbound-method
@@ -24,15 +23,12 @@ describe('beacon', () => {
       jest.spyOn(window.navigator, 'sendBeacon').mockReturnValueOnce(true);
       const response = await transport.send(url, payload);
       expect(response).toEqual({
-        statusCode: 200,
-        status: Status.Success,
-        body: {
-          eventsIngested: 0,
-          payloadSizeBytes: 26,
-          // serverUploadTime is equal to Date.now() which is different each test execution
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          serverUploadTime: expect.any(Number),
-        },
+        code: 200,
+        events_ingested: 0,
+        payload_size_bytes: 26,
+        // serverUploadTime is equal to Date.now() which is different each test execution
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        server_upload_time: expect.any(Number),
       });
     });
 
@@ -46,8 +42,7 @@ describe('beacon', () => {
       jest.spyOn(window.navigator, 'sendBeacon').mockReturnValueOnce(false);
       const response = await transport.send(url, payload);
       expect(response).toEqual({
-        statusCode: 500,
-        status: Status.Failed,
+        code: 500,
       });
     });
 

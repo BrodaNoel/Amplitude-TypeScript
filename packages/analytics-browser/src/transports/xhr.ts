@@ -1,12 +1,11 @@
-import { buildResponse } from '@amplitude/analytics-core';
-import { Payload, Response, Transport } from '@amplitude/analytics-types';
+import { Payload, Transport } from '@amplitude/analytics-types';
 
 export class XHRTransport implements Transport {
   private state = {
     done: 4,
   };
 
-  async send(serverUrl: string, payload: Payload): Promise<Response | null> {
+  async send(serverUrl: string, payload: Payload): Promise<Record<string, any> | null> {
     return new Promise((resolve, reject) => {
       /* istanbul ignore if */
       if (typeof XMLHttpRequest === 'undefined') {
@@ -21,8 +20,7 @@ export class XHRTransport implements Transport {
             const responsePayload = xhr.responseText;
             // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             const parsedResponsePayload: Record<string, any> = JSON.parse(responsePayload);
-            const result = buildResponse(parsedResponsePayload);
-            resolve(result);
+            resolve(parsedResponsePayload);
           } catch (e) {
             reject(e);
           }

@@ -2,14 +2,6 @@ import { Status } from '@amplitude/analytics-types';
 import { buildResponse } from '../../src/utils/response-builder';
 
 describe('response-builder', () => {
-  test('should handle malformed input', () => {
-    // Simulates a malformed input at runtime
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    const response = buildResponse('');
-    expect(response).toBe(null);
-  });
-
   describe('success', () => {
     test('should return success response', () => {
       const response = buildResponse({
@@ -181,7 +173,7 @@ describe('response-builder', () => {
   });
 
   describe('timeout', () => {
-    test('should generic response', () => {
+    test('should handle generic response', () => {
       const response = buildResponse({
         code: 408,
       });
@@ -193,13 +185,21 @@ describe('response-builder', () => {
   });
 
   describe('other error', () => {
-    test('should generic response', () => {
+    test('should handle generic response', () => {
       const response = buildResponse({
         code: 500,
       });
       expect(response).toEqual({
         status: Status.Failed,
         statusCode: 500,
+      });
+    });
+
+    test('should handle incomplete response', () => {
+      const response = buildResponse({});
+      expect(response).toEqual({
+        status: Status.Unknown,
+        statusCode: 0,
       });
     });
   });

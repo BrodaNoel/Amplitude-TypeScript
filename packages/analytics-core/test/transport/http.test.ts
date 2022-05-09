@@ -1,6 +1,5 @@
 import { Http } from '../../src/transports/http';
 import * as http from 'http';
-import { Status } from '@amplitude/analytics-types';
 
 describe('http transport', () => {
   test('should send to url', async () => {
@@ -34,7 +33,7 @@ describe('http transport', () => {
     });
 
     const response = await provider.send(url, payload);
-    expect(response?.statusCode).toBe(200);
+    expect(response?.code).toBe(200);
     expect(request).toHaveBeenCalledTimes(1);
   });
 
@@ -69,8 +68,7 @@ describe('http transport', () => {
     });
 
     const response = await provider.send(url, payload);
-    expect(response?.statusCode).toBe(400);
-    expect(response?.status).toBe(Status.Invalid);
+    expect(response?.code).toBe(400);
     expect(request).toHaveBeenCalledTimes(1);
   });
 

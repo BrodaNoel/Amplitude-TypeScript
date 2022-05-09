@@ -1,9 +1,8 @@
-import { Payload, Response, Transport } from '@amplitude/analytics-types';
+import { Payload, Transport } from '@amplitude/analytics-types';
 import * as http from 'http';
-import { buildResponse } from '../utils/response-builder';
 
 export class Http implements Transport {
-  send(serverUrl: string, payload: Payload): Promise<Response | null> {
+  send(serverUrl: string, payload: Payload): Promise<Record<string, any> | null> {
     const url = new URL(serverUrl);
     const requestPayload = JSON.stringify(payload);
     const options = {
@@ -30,8 +29,7 @@ export class Http implements Transport {
             try {
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
               const parsedResponsePayload: Record<string, any> = JSON.parse(responsePayload);
-              const result = buildResponse(parsedResponsePayload);
-              resolve(result);
+              resolve(parsedResponsePayload);
               return;
             } catch {
               resolve(null);
@@ -39,7 +37,7 @@ export class Http implements Transport {
           }
         });
       });
-      req.on('error', buildResponse);
+      req.on('error', (e) => e);
       req.end(requestPayload);
     });
   }

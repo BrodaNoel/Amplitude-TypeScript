@@ -1,6 +1,6 @@
 import { AmplitudeCore, Destination, Identify, Revenue, returnWrapper } from '@amplitude/analytics-core';
 import {
-  BrowserConfig,
+  BrowserConfig as IBrowserConfig,
   BrowserOptions,
   EventOptions,
   Identify as IIdentify,
@@ -10,34 +10,14 @@ import {
 } from '@amplitude/analytics-types';
 import { convertProxyObjectToRealObject, isInstanceProxy } from './utils/snippet-helper';
 import { Context } from './plugins/context';
-import { useBrowserConfig, createTransport } from './config';
+import { useBrowserConfig, createTransport, BrowserConfig } from './config';
 import { getAttributions } from './attribution';
 import { updateCookies } from './session-manager';
 import { parseOldCookies } from './cookie-migration';
 
-export class AmplitudeBrowser extends AmplitudeCore<BrowserConfig> {
+export class BaseBrowser extends AmplitudeCore<IBrowserConfig> {
   async init(apiKey: string, userId?: string, options?: BrowserOptions) {
-    // Step 1: Read cookies stored by old SDK
-    const oldCookies = parseOldCookies(apiKey, options);
-
-    // Step 2: Create browser config
-    const browserOptions = useBrowserConfig(apiKey, userId || oldCookies.userId, {
-      ...options,
-      deviceId: oldCookies.deviceId ?? options?.deviceId,
-      sessionId: oldCookies.sessionId ?? options?.sessionId,
-      optOut: options?.optOut ?? oldCookies.optOut,
-    });
-    await super.init(undefined, undefined, browserOptions);
-
-    // Step 3: Store user session in cookie storage
-    updateCookies(this.config, oldCookies.lastEventTime);
-
-    // Step 4: Install plugins
-    await this.add(new Context());
-    await this.add(new Destination());
-
-    // Step 4: Track attributions
-    void this.trackAttributions();
+    await super.init(undefined, undefined, new BrowserConfig(apiKey, userId, options));
   }
 
   getUserId() {
@@ -121,6 +101,32 @@ export class AmplitudeBrowser extends AmplitudeCore<BrowserConfig> {
       }
     });
     return this.identify(id);
+  }
+}
+
+export class AmplitudeBrowser extends BaseBrowser {
+  async init(apiKey: string, userId?: string, options?: BrowserOptions) {
+    // Step 1: Read cookies stored by old SDK
+    const oldCookies = parseOldCookies(apiKey, options);
+
+    // Step 2: Create browser config
+    const browserOptions = useBrowserConfig(apiKey, userId || oldCookies.userId, {
+      ...options,
+      deviceId: oldCookies.deviceId ?? options?.deviceId,
+      sessionId: oldCookies.sessionId ?? options?.sessionId,
+      optOut: options?.optOut ?? oldCookies.optOut,
+    });
+    await super.init(apiKey, browserOptions.userId, browserOptions);
+
+    // Step 3: Store user session in cookie storage
+    updateCookies(this.config, oldCookies.lastEventTime);
+
+    // Step 4: Install plugins
+    await this.add(new Context());
+    await this.add(new Destination());
+
+    // Step 4: Track attributions
+    void this.trackAttributions();
   }
 }
 

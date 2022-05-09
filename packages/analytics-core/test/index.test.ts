@@ -1,6 +1,7 @@
 import {
   AmplitudeCore,
   buildResponse,
+  BaseDestination,
   Destination,
   Config,
   Logger,
@@ -22,6 +23,7 @@ describe('index', () => {
     expect(typeof client.add).toBe('function');
     expect(typeof client.remove).toBe('function');
     expect(typeof buildResponse).toBe('function');
+    expect(typeof BaseDestination).toBe('function');
     expect(typeof Destination).toBe('function');
     expect(typeof Config).toBe('function');
     expect(typeof Logger).toBe('function');

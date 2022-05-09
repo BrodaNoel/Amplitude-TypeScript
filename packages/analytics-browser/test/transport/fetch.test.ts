@@ -1,6 +1,4 @@
 import { FetchTransport } from '../../src/transports/fetch';
-import * as core from '@amplitude/analytics-core';
-import { Status } from '@amplitude/analytics-types';
 import 'isomorphic-fetch';
 
 describe('fetch', () => {
@@ -13,16 +11,12 @@ describe('fetch', () => {
         events: [],
       };
       const result = {
-        statusCode: 200,
-        status: Status.Success as const,
-        body: {
-          eventsIngested: 0,
-          payloadSizeBytes: 0,
-          serverUploadTime: 0,
-        },
+        code: 200,
+        events_ingested: 0,
+        payload_size_bytes: 0,
+        server_upload_time: 0,
       };
-      jest.spyOn(window, 'fetch').mockReturnValueOnce(Promise.resolve(new Response('{}')));
-      jest.spyOn(core, 'buildResponse').mockReturnValueOnce(result);
+      jest.spyOn(window, 'fetch').mockReturnValueOnce(Promise.resolve(new Response(JSON.stringify(result))));
       const response = await transport.send(url, payload);
       expect(response).toEqual(result);
     });

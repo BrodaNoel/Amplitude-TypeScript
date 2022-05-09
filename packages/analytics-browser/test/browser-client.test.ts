@@ -4,7 +4,7 @@ import * as Config from '../src/config';
 import * as SessionManager from '../src/session-manager';
 import * as CookieMigration from '../src/cookie-migration';
 import * as attribution from '../src/attribution';
-import { Status, TransportType } from '@amplitude/analytics-types';
+import { TransportType } from '@amplitude/analytics-types';
 import { FetchTransport } from '../src/transports/fetch';
 import * as SnippetHelper from '../src/utils/snippet-helper';
 
@@ -145,13 +145,10 @@ describe('browser-client', () => {
   describe('identify', () => {
     test('should track identify', async () => {
       const send = jest.fn().mockReturnValueOnce({
-        status: Status.Success,
-        statusCode: 200,
-        body: {
-          eventsIngested: 1,
-          payloadSizeBytes: 1,
-          serverUploadTime: 1,
-        },
+        code: 200,
+        events_ingested: 1,
+        payload_size_bytes: 1,
+        server_upload_time: 1,
       });
       const client = new AmplitudeBrowser();
       await client.init(API_KEY, undefined, {
@@ -167,13 +164,10 @@ describe('browser-client', () => {
 
     test('should track identify using proxy', async () => {
       const send = jest.fn().mockReturnValueOnce({
-        status: Status.Success,
-        statusCode: 200,
-        body: {
-          eventsIngested: 1,
-          payloadSizeBytes: 1,
-          serverUploadTime: 1,
-        },
+        code: 200,
+        events_ingested: 1,
+        payload_size_bytes: 1,
+        server_upload_time: 1,
       });
       const convertProxyObjectToRealObject = jest
         .spyOn(SnippetHelper, 'convertProxyObjectToRealObject')
@@ -199,13 +193,10 @@ describe('browser-client', () => {
   describe('groupIdentify', () => {
     test('should track group identify', async () => {
       const send = jest.fn().mockReturnValueOnce({
-        status: Status.Success,
-        statusCode: 200,
-        body: {
-          eventsIngested: 1,
-          payloadSizeBytes: 1,
-          serverUploadTime: 1,
-        },
+        code: 200,
+        events_ingested: 1,
+        payload_size_bytes: 1,
+        server_upload_time: 1,
       });
       const client = new AmplitudeBrowser();
       await client.init(API_KEY, undefined, {
@@ -221,13 +212,10 @@ describe('browser-client', () => {
 
     test('should track group identify using proxy', async () => {
       const send = jest.fn().mockReturnValueOnce({
-        status: Status.Success,
-        statusCode: 200,
-        body: {
-          eventsIngested: 1,
-          payloadSizeBytes: 1,
-          serverUploadTime: 1,
-        },
+        code: 200,
+        events_ingested: 1,
+        payload_size_bytes: 1,
+        server_upload_time: 1,
       });
       const convertProxyObjectToRealObject = jest
         .spyOn(SnippetHelper, 'convertProxyObjectToRealObject')
@@ -253,13 +241,10 @@ describe('browser-client', () => {
   describe('revenue', () => {
     test('should track revenue', async () => {
       const send = jest.fn().mockReturnValueOnce({
-        status: Status.Success,
-        statusCode: 200,
-        body: {
-          eventsIngested: 1,
-          payloadSizeBytes: 1,
-          serverUploadTime: 1,
-        },
+        code: 200,
+        events_ingested: 1,
+        payload_size_bytes: 1,
+        server_upload_time: 1,
       });
       const client = new AmplitudeBrowser();
       await client.init(API_KEY, undefined, {
@@ -275,13 +260,10 @@ describe('browser-client', () => {
 
     test('should track revenue using proxy', async () => {
       const send = jest.fn().mockReturnValueOnce({
-        status: Status.Success,
-        statusCode: 200,
-        body: {
-          eventsIngested: 1,
-          payloadSizeBytes: 1,
-          serverUploadTime: 1,
-        },
+        code: 200,
+        events_ingested: 1,
+        payload_size_bytes: 1,
+        server_upload_time: 1,
       });
       const convertProxyObjectToRealObject = jest
         .spyOn(SnippetHelper, 'convertProxyObjectToRealObject')

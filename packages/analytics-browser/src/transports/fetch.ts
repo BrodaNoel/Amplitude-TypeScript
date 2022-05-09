@@ -1,8 +1,7 @@
-import { buildResponse } from '@amplitude/analytics-core';
-import { Payload, Response, Transport } from '@amplitude/analytics-types';
+import { Payload, Transport } from '@amplitude/analytics-types';
 
 export class FetchTransport implements Transport {
-  async send(serverUrl: string, payload: Payload): Promise<Response | null> {
+  async send(serverUrl: string, payload: Payload): Promise<Record<string, any> | null> {
     /* istanbul ignore if */
     if (typeof fetch === 'undefined') {
       throw new Error('FetchTransport is not supported');
@@ -17,7 +16,6 @@ export class FetchTransport implements Transport {
     };
     const response = await fetch(serverUrl, options);
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const responsePayload: Record<string, any> = await response.json();
-    return buildResponse(responsePayload);
+    return (await response.json()) as Record<string, any>;
   }
 }

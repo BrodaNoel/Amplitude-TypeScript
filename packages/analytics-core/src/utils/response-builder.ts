@@ -4,12 +4,8 @@
 import { Response, Status } from '@amplitude/analytics-types';
 import { buildStatus } from './status-builder';
 
-export const buildResponse = (responseJSON: Record<string, any>): Response | null => {
-  if (typeof responseJSON !== 'object') {
-    return null;
-  }
-
-  const statusCode = responseJSON.code || 0;
+export const buildResponse = (responseJSON: Record<string, any>): Response => {
+  const statusCode = Number(responseJSON.code) || 0;
   const status = buildStatus(statusCode);
 
   switch (status) {
