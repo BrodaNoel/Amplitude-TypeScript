@@ -9,19 +9,8 @@ on:
       label:
         required: true
         type: string
-    secrets:
-      JIRA_BASE_URL:
-        description: 'Jira Base Url'
-        required: true
-      JIRA_USER_EMAIL:
-        description: 'Jira User Email'
-        required: true
-      JIRA_API_TOKEN:
-        description: 'Jira Token'
-        required: true
-      JIRA_PROJECT:
-        description: 'Jira Project'
-        required: true
+
+env: ${{ secrets }}
 
 jobs:
   build:
